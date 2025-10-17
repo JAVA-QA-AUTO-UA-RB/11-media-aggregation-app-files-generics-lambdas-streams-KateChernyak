@@ -5,6 +5,11 @@ import com.example.media.classes.Track;
 import com.example.media.classes.Video;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Клас-утиліта для запису статистики у вихідні файли.
@@ -45,6 +50,45 @@ public class MediaStatisticsWriter {
      * - Pop tracks → усі треки, у яких жанр == "Pop"
      */
     public static void writeTrackStats(Playlist<Track> playlist, String filename) throws IOException {
+        List<Track> tracks = playlist.getItems();
+
+        int count = tracks.size();
+        double averageDuration = tracks.stream()
+                .mapToInt(Track::getDuration)
+                .average()
+                .orElse(0);
+
+        //Рейтинг ТОП-3
+        List<Track> top3 = tracks.stream()
+                .sorted(Comparator.comparingInt(Track::getRating).reversed()
+                        .thenComparing(Track::getDuration, Comparator.reverseOrder()))
+                .limit(3)
+                .toList();
+
+        //РОР треки
+        List<Track> popTracks = tracks.stream()
+                .filter(t -> t.getGenre().equalsIgnoreCase("Pop"))
+                .toList();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(" Tracks count: ").append(count).append("\n");
+        sb.append(" Average duration: ").append((int) averageDuration).append(" seconds\n\n");
+
+        sb.append(" TOP 3 tracks by rating: \n");
+        for (int i = 0; i < top3.size(); i++) {
+            Track t = top3.get(i);
+            sb.append(i + 1).append(". ").append(t.getTitle())
+                    .append(" (rating ").append(t.getRating()).append(")\n");
+        }
+
+        sb.append(" \nPOP tacks: \n");
+        popTracks.forEach(t -> sb.append("- ").append(t.getTitle()).append(" \n"));
+
+        Files.write(Paths.get(filename), sb.toString().getBytes());
+    }
+
+
+
         // TODO: Реалізуйте цей метод
         // Підказки:
         // - Використайте playlist.getItems().size() для підрахунку кількості
@@ -52,7 +96,7 @@ public class MediaStatisticsWriter {
         // - Використайте stream().sorted(...).limit(3) для топ-3 за рейтингом
         // - Використайте stream().filter(t -> t.getGenre().equalsIgnoreCase("Pop")) для відбору Pop-треків
         // - Запишіть результати у файл через PrintWriter або Files.write()
-    }
+
 
     /**
      * Запис статистики по відео у файл.
@@ -79,6 +123,41 @@ public class MediaStatisticsWriter {
      * - Education videos → усі відео, у яких category == "Education"
      */
     public static void writeVideoStats(Playlist<Video> playlist, String filename) throws IOException {
+        List<Video> videos = playlist.getItems();
+
+        int count = videos.size();
+        double averageDuration = videos.stream()
+                .mapToInt(Video::getDuration)
+                .average()
+                .orElse(0);
+
+        //ТОР3 відіва за переглядами
+        List<Video> top3 = videos.stream()
+                .sorted(Comparator.comparingInt(Video::getViews).reversed())
+                .limit(3)
+                .toList();
+
+        // Education video
+        List<Video> educationVideos = videos.stream()
+                .filter(v -> v.getCategory().equalsIgnoreCase("Education"))
+                .toList();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(" Videos count: ").append(count).append("\n");
+        sb.append(" Average duration: ").append((int) averageDuration).append(" seconds\n\n");
+
+        sb.append(" Top 3 videos by views: \n");
+        for (int i = 0; i < top3.size(); i++) {
+            Video v = top3.get(i);
+            sb.append(i + 1).append(". ").append(v.getTitle())
+                    .append(" (").append(v.getViews()).append(" views)\n");
+        }
+
+        sb.append("\nEducation videos:\n");
+        educationVideos.forEach(v -> sb.append("- ").append(v.getTitle()).append("\n"));
+        Files.write(Paths.get(filename), sb.toString().getBytes());
+    }
+
         // TODO: Реалізуйте цей метод
         // Підказки:
         // - Використайте playlist.getItems().size() для підрахунку кількості
@@ -87,4 +166,4 @@ public class MediaStatisticsWriter {
         // - Використайте stream().filter(v -> v.getCategory().equalsIgnoreCase("Education")) для Education-відео
         // - Запишіть результати у файл через PrintWriter або Files.write()
     }
-}
+
